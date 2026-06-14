@@ -19,16 +19,10 @@ module.exports = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 8453,
     },
-    arcTestnet: {
-      url: process.env.ARC_RPC_URL || "https://rpc.testnet.arc.network",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 5042002,
-    },
   },
   etherscan: {
     apiKey: {
       base: process.env.BASESCAN_API_KEY || "",
-      arcTestnet: process.env.ARCSCAN_API_KEY || "",
     },
     customChains: [
       {
@@ -37,14 +31,6 @@ module.exports = {
         urls: {
           apiURL: "https://api.basescan.org/api",
           browserURL: "https://basescan.org",
-        },
-      },
-      {
-        network: "arcTestnet",
-        chainId: 5042002,
-        urls: {
-          apiURL: "https://api.testnet.arcscan.app/api",
-          browserURL: "https://testnet.arcscan.app",
         },
       },
     ],

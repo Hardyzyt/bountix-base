@@ -34,7 +34,6 @@ import { getRequestLocale } from "@/lib/i18n/server";
 import { getTask, tasks as previewTasks } from "@/lib/marketplace";
 import { createClient } from "@/lib/supabase/server";
 import { formatUsdc } from "@/lib/payments";
-import { explorerTxUrl } from "@/lib/escrow";
 import {
   TASK_LIST_COLUMNS,
   TASK_TYPE_COLOR,
@@ -344,7 +343,7 @@ export default async function TaskDetailPage({ params }: RouteParams) {
                           {t("taskDetail.usdcLocked")}
                         </p>
                         <a
-                          href={explorerTxUrl(dbTask.chain, dbTask.escrow_tx_hash)}
+                          href={`https://basescan.org/tx/${dbTask.escrow_tx_hash}`}
                           target="_blank"
                           rel="noreferrer"
                           className="mt-4 inline-flex items-center gap-2 break-all rounded-lg border-2 border-[#140625] bg-white px-3 py-2 text-sm font-black text-[#7c3cff] shadow-[3px_3px_0_#140625] transition hover:bg-[#38e7ff]"
@@ -359,7 +358,6 @@ export default async function TaskDetailPage({ params }: RouteParams) {
                         rewardAmount={dbTask.reward_amount ?? 0}
                         rewardMode={dbTask.reward_mode}
                         winnerCount={dbTask.raffle_winner_count}
-                        networkSlug={dbTask.chain}
                         locale={locale}
                       />
                     )

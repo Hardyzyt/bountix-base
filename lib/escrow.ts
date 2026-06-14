@@ -1,71 +1,51 @@
 /**
- * Bountix escrow constants + helpers.
+ * Bountix escrow (BountixEscrowV1) constants + helpers.
  *
- * On-chain USDC escrow. Network-specific values are resolved from
- * lib/networks.ts based on the active network.
+ * On-chain USDC escrow on Base mainnet. Optional payment path — manual
+ * payment remains the default and does not touch any of this.
  *
  * Contract docs: /docs/escrow-contract.md
+ * Reuses the shared payment constants in /lib/payments.ts.
  */
 
-import { getNetworkConfig, type NetworkConfig } from "@/lib/networks";
+import {
+  BASE_MAINNET_CHAIN_ID,
+  BASE_MAINNET_USDC_ADDRESS,
+  USDC_DECIMALS,
+} from "@/lib/payments";
 
-export function escrowConfig(slug: string): {
-  escrowV0: string;
-  escrowV1: string;
-  escrowV2: string;
-  usdc: string;
-  chainId: number;
-  chainIdHex: string;
-} {
-  const net = getNetworkConfig(slug);
-  return {
-    escrowV0: net.contracts.escrowV0,
-    escrowV1: net.contracts.escrowV1,
-    escrowV2: net.contracts.escrowV1,
-    usdc: net.contracts.usdc,
-    chainId: net.id,
-    chainIdHex: net.chainIdHex,
-  };
-}
+/** Historical BountixEscrowV0 on Base mainnet. Kept for V0-funded tasks. */
+export const ESCROW_V0_CONTRACT_ADDRESS =
+  "0x89FAF386c052B55363fdEe45B04c48fcDcb5A692";
 
-/** Default escrow contract address for the given network slug. */
-export function escrowContractAddress(slug: string): string {
-  return getNetworkConfig(slug).contracts.escrowV1;
-}
+/** Active BountixEscrowV1 on Base mainnet. */
+export const ESCROW_V1_CONTRACT_ADDRESS =
+  "0x81AcFAbb2D7f99fC68d764f720c731a0fA5C0995";
 
-/** USDC contract address for the given network slug. */
-export function escrowUsdcAddress(slug: string): string {
-  return getNetworkConfig(slug).contracts.usdc;
-}
-
-/** Default escrow contract address — resolves via current network slug. Backward-compatible. */
-export const ESCROW_CONTRACT_ADDRESS = "0x81AcFAbb2D7f99fC68d764f720c731a0fA5C0995";
-export const ESCROW_V1_CONTRACT_ADDRESS = "0x81AcFAbb2D7f99fC68d764f720c731a0fA5C0995";
-export const ESCROW_V0_CONTRACT_ADDRESS = "0x89FAF386c052B55363fdEe45B04c48fcDcb5A692";
-export const ESCROW_USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
-export const ESCROW_CHAIN_ID = 8453;
-export const ESCROW_CHAIN_ID_HEX = "0x2105";
-export const ESCROW_V2_CONTRACT_ADDRESS = "0x81AcFAbb2D7f99fC68d764f720c731a0fA5C0995";
+/** Active escrow contract for newly funded tasks. */
+export const ESCROW_CONTRACT_ADDRESS =
+  ESCROW_V1_CONTRACT_ADDRESS;
 
 export const ESCROW_CONTRACT_VERSION = "v1";
 export const ESCROW_DEFAULT_FEE_BPS = 250;
 export const ESCROW_MAX_FEE_BPS = 1000;
 
-/** Minimum escrow reward = 1 USDC (human-readable, chain-agnostic). */
+export const ESCROW_USDC_ADDRESS = BASE_MAINNET_USDC_ADDRESS;
+export const ESCROW_CHAIN_ID = BASE_MAINNET_CHAIN_ID;
+
+/** Base mainnet chainId as the 0x-hex string used by EIP-1193 wallets. */
+export const ESCROW_CHAIN_ID_HEX = `0x${BASE_MAINNET_CHAIN_ID.toString(16)}`;
+
+/** Minimum escrow reward = 1 USDC, in base units (6 decimals). */
 export const MIN_ESCROW_USDC = 1;
+export const MIN_ESCROW_UNITS = BigInt(1_000_000);
 
-/** Minimum escrow reward in base units for the given network. */
-export function minEscrowUnits(networkSlug: string = "base"): bigint {
-  const d = getNetworkConfig(networkSlug).usdcDecimals;
-  return BigInt(MIN_ESCROW_USDC) * BigInt(10) ** BigInt(d);
-}
-
-/** Convert a human USDC amount (e.g. 50.00) to network-specific base units. */
-export function usdcToUnits(amount: number, networkSlug: string = "base"): bigint {
+/** Convert a human USDC amount (e.g. 50.00) to 6-decimal base units. */
+export function usdcToUnits(amount: number): bigint {
   if (!Number.isFinite(amount) || amount < 0) return BigInt(0);
-  const decimals = getNetworkConfig(networkSlug).usdcDecimals;
+  // Round to the cent first to avoid float dust, then scale to 6 decimals.
   const cents = Math.round(amount * 100);
-  return BigInt(cents) * BigInt(10) ** BigInt(decimals - 2);
+  return BigInt(cents) * BigInt(10) ** BigInt(USDC_DECIMALS - 2);
 }
 
 /**
@@ -194,9 +174,4 @@ export function escrowContractForTask(input: {
 /** Basescan tx URL helper for surfacing the funding receipt. */
 export function basescanTxUrl(txHash: string): string {
   return `https://basescan.org/tx/${txHash}`;
-}
-
-/** Network-aware explorer tx URL helper. */
-export function explorerTxUrl(slug: string, txHash: string): string {
-  return `${getNetworkConfig(slug).explorerUrl}/tx/${txHash}`;
 }

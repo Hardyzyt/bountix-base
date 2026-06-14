@@ -13,8 +13,7 @@
     "estimate:base": "hardhat run scripts/estimate.cjs --network base",
     "deploy:base": "hardhat run scripts/deploy.cjs --network base",
     "estimate:v1:base": "hardhat run scripts/estimate-v1.cjs --network base",
-    "deploy:v1:base": "hardhat run scripts/deploy-v1.cjs --network base",
-    "deploy:v1:arc": "hardhat run scripts/deploy-arc-v1.cjs --network arcTestnet"
+    "deploy:v1:base": "hardhat run scripts/deploy-v1.cjs --network base"
   },
   "dependencies": {
     "@supabase/ssr": "latest",

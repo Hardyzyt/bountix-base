@@ -57,7 +57,7 @@ export function validateUsername(value: string): string | null {
 export function validateWalletAddress(value: string): string | null {
   if (!value) return null;
   if (!WALLET_PATTERN.test(value)) {
-    return "Wallet address must be a 0x-prefixed address.";
+    return "Wallet address must be a 0x-prefixed Ethereum/Base address.";
   }
   return null;
 }

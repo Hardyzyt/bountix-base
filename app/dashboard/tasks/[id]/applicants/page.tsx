@@ -22,7 +22,7 @@ import {
 } from "@/app/applications/actions";
 import { createClient } from "@/lib/supabase/server";
 import { TASK_LIST_COLUMNS, isUuid, type DbTask } from "@/lib/tasks";
-import { escrowContractForTask, explorerTxUrl } from "@/lib/escrow";
+import { escrowContractForTask } from "@/lib/escrow";
 import {
   APPLICATION_COLUMNS,
   APPLICATION_STATUS_COLOR,
@@ -293,7 +293,6 @@ export default async function ApplicantsPage({ params }: RouteParams) {
                     taskId={task.id}
                     winners={raffleReleaseWinners}
                     contractAddress={escrowContractAddress}
-                    networkSlug={task.chain}
                     locale={locale}
                   />
                 ) : null}
@@ -604,7 +603,6 @@ export default async function ApplicantsPage({ params }: RouteParams) {
                                 rewardAmount={task.reward_amount}
                                 workerWalletAddress={applicant ? applicant.wallet_address : null}
                                 contractAddress={escrowContractAddress}
-                                networkSlug={task.chain}
                                 locale={locale}
                               />
                             ) : null}
@@ -617,7 +615,7 @@ export default async function ApplicantsPage({ params }: RouteParams) {
                                 {s.assign_tx_hash ? (
                                   <div className="mt-2 space-y-1">
                                     <a
-                                      href={explorerTxUrl(task.chain, s.assign_tx_hash)}
+                                      href={`https://basescan.org/tx/${s.assign_tx_hash}`}
                                       target="_blank"
                                       rel="noreferrer"
                                       className="block text-xs font-black text-[#7c3cff] hover:underline"
@@ -629,7 +627,7 @@ export default async function ApplicantsPage({ params }: RouteParams) {
                                 {s.release_tx_hash ? (
                                   <div className="space-y-1">
                                     <a
-                                      href={explorerTxUrl(task.chain, s.release_tx_hash)}
+                                      href={`https://basescan.org/tx/${s.release_tx_hash}`}
                                       target="_blank"
                                       rel="noreferrer"
                                       className="block text-xs font-black text-[#7c3cff] hover:underline"

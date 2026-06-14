@@ -2,8 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Bell, LogOut, Menu, User } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { NetworkSelector } from "@/components/ui/network-selector";
-import { getServerNetworkSlug } from "@/lib/network-store";
 import { ButtonLink } from "@/components/ui/button";
 import { logoutAction } from "@/app/auth/actions";
 import { createTranslator, type TranslationKey } from "@/lib/i18n";
@@ -71,8 +69,6 @@ export async function SiteHeader() {
   const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
   const navLinks: NavLink[] = user ? authedNavLinks : guestNavLinks;
 
-  const networkSlug = await getServerNetworkSlug();
-
   return (
     <header className="sticky top-0 z-50 border-b-2 border-[#140625] bg-[#fffaf4]/95 backdrop-blur-xl">
       <div className="container-page py-3">
@@ -111,7 +107,6 @@ export async function SiteHeader() {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <NetworkSelector currentSlug={networkSlug} />
             <LanguageSwitcher locale={locale} />
             {user ? (
               <details className="relative">
@@ -202,8 +197,7 @@ export async function SiteHeader() {
                   </Link>
                 ))}
               </div>
-              <div className="mt-3 flex gap-2 border-t-2 border-[#140625]/20 pt-3">
-                <NetworkSelector currentSlug={networkSlug} />
+              <div className="mt-3 border-t-2 border-[#140625]/20 pt-3">
                 <LanguageSwitcher
                   locale={locale}
                   className="w-full justify-between"

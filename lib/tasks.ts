@@ -109,7 +109,7 @@ export type DbTask = {
   category: string | null;
   reward_amount: number | null;
   reward_currency: "USDC";
-  chain: "base" | "base-sepolia" | "arc-testnet";
+  chain: "base" | "base-sepolia";
   status: TaskStatus;
   task_type: TaskType;
   external_link: string | null;

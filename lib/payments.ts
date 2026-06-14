@@ -1,14 +1,26 @@
 /**
  * Bountix payment constants.
  *
- * USDC-only payment token. Network-specific values are resolved from
- * lib/networks.ts based on the active network selection.
+ * Direction: USDC only on Base. No custom token, no USDT.
+ * Manual payment and the deployed Base mainnet escrow flow are live payment
+ * paths for Bountix rewards.
  *
  * See docs/constraints.md for the full payment + free-tier rules.
  */
 
 export const PAYMENT_TOKEN = "USDC" as const;
 export type PaymentToken = typeof PAYMENT_TOKEN;
+
+export const CHAIN_NAME = "Base" as const;
+export const BASE_MAINNET_CHAIN_ID = 8453;
+export const BASE_SEPOLIA_CHAIN_ID = 84532;
+
+/** Native USDC contract on Base mainnet (Circle-issued). */
+export const BASE_MAINNET_USDC_ADDRESS =
+  "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+
+/** USDC has 6 decimals on every supported chain. */
+export const USDC_DECIMALS = 6;
 
 export type PaymentStatus =
   | "unpaid"
@@ -43,4 +55,7 @@ export function formatUsdc(amount: number | null | undefined): string {
   return `${formatted} ${PAYMENT_TOKEN}`;
 }
 
-
+/**
+ * True because Bountix has a deployed Base mainnet escrow contract.
+ */
+export const escrowOnBaseLive = true;
