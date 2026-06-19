@@ -824,12 +824,11 @@ export async function refundEscrowAction(taskId: string) {
   const taskKey = uuidToBytes32(taskId);
 
   try {
-    const privateKey = process.env.PRIVATE_KEY;
-    if (!privateKey) {
-      return { ok: false, message: "Server refund key not configured." };
+    const rawKey = process.env.PRIVATE_KEY;
+    if (!rawKey) {
+      return { ok: false, message: "PRIVATE_KEY belum diset. Tambahin PRIVATE_KEY ke environment variable Vercel, atau jalanin lokal make .env" };
     }
-
-    const account = privateKeyToAccount(`0x${privateKey.replace(/^0x/, "")}` as `0x${string}`);
+    const account = privateKeyToAccount(`0x${rawKey.replace(/^0x/, "")}` as `0x${string}`);
     const walletClient = createWalletClient({
       account,
       chain: base,
