@@ -18,7 +18,11 @@ import {
   type PaymentMethod,
   type RewardMode,
 } from "@/lib/tasks";
-import { ESCROW_CONTRACT_ADDRESS, MIN_ESCROW_USDC } from "@/lib/escrow";
+import {
+  ESCROW_CONTRACT_ADDRESS,
+  ESCROW_V2_CONTRACT_ADDRESS,
+  MIN_ESCROW_USDC,
+} from "@/lib/escrow";
 import type { TaskFormState } from "@/lib/task-form-state";
 
 type ParsedTaskInput = {
@@ -429,7 +433,7 @@ export async function markTaskEscrowFundedAction(
   // Confirm ownership + escrow intent + not already funded before writing.
   const { data: task } = await supabase
     .from("tasks")
-    .select("creator_id, payment_method, escrow_tx_hash")
+    .select("creator_id, payment_method, escrow_tx_hash, reward_mode")
     .eq("id", taskId)
     .maybeSingle();
 
@@ -438,6 +442,7 @@ export async function markTaskEscrowFundedAction(
         creator_id: string;
         payment_method: string;
         escrow_tx_hash: string | null;
+        reward_mode: string | null;
       }
     | null;
 
@@ -454,11 +459,16 @@ export async function markTaskEscrowFundedAction(
     return { ok: false, message: "This task is already funded." };
   }
 
+  const escrowContractAddress =
+    row.reward_mode === "fcfs"
+      ? ESCROW_V2_CONTRACT_ADDRESS
+      : ESCROW_CONTRACT_ADDRESS;
+
   const { data: funded, error } = await supabase
     .from("tasks")
     .update({
       escrow_tx_hash: txHash,
-      escrow_contract_address: ESCROW_CONTRACT_ADDRESS,
+      escrow_contract_address: escrowContractAddress,
       status: "open",
     })
     .eq("id", taskId)

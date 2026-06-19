@@ -43,6 +43,7 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
 
 export const REWARD_MODES = ["fixed", "raffle"] as const;
 export type RewardMode = (typeof REWARD_MODES)[number];
+export type DbRewardMode = RewardMode | "fcfs";
 
 export const REWARD_MODE_LABEL: Record<RewardMode, string> = {
   fixed: "Fixed reward",
@@ -115,7 +116,7 @@ export type DbTask = {
   external_link: string | null;
   start_date: string | null;
   end_date: string | null;
-  reward_mode: RewardMode;
+  reward_mode: DbRewardMode;
   raffle_winner_count: number;
   eligibility_rules: string | null;
   access_level: TaskAccessLevel;

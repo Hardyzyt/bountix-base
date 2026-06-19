@@ -191,6 +191,7 @@ export default async function ApplicantsPage({ params }: RouteParams) {
   const escrowContractAddress = escrowContractForTask({
     escrowContractAddress: task.escrow_contract_address,
     escrowTxHash: task.escrow_tx_hash,
+    rewardMode: task.reward_mode,
   });
   const isMultiWinnerRaffle = isRaffle && task.raffle_winner_count > 1;
   const raffleReleaseWinners = winnerSubs.map((s) => {

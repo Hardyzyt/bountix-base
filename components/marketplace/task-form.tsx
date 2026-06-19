@@ -76,7 +76,7 @@ export function TaskForm({
   const def = initialTask;
   const allowedTypes = isAdmin ? TASK_TYPES : (["user_task"] as const);
   const [rewardMode, setRewardMode] = useState<RewardMode>(
-    def?.reward_mode ?? "fixed",
+    def?.reward_mode === "raffle" ? "raffle" : "fixed",
   );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     def?.payment_method ?? "manual",
@@ -211,7 +211,7 @@ export function TaskForm({
                   value={modeValue}
                   defaultChecked={
                     def?.reward_mode
-                      ? def.reward_mode === modeValue
+                      ? rewardMode === modeValue
                       : i === 0
                   }
                   onChange={() => setRewardMode(modeValue)}

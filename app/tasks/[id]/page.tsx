@@ -27,7 +27,6 @@ import { SiteHeader } from "@/components/site-header";
 import { withdrawApplicationAction } from "@/app/applications/actions";
 import {
   escrowContractForTask,
-  ESCROW_CONTRACT_ADDRESS,
 } from "@/lib/escrow";
 import {
   createTranslator,
@@ -169,11 +168,11 @@ export default async function TaskDetailPage({ params }: RouteParams) {
       dbTask.access_level === "early_contributor";
     const canWorkTask =
       !requiresEarlyContributor || ctx.hasEarlyContributorAccess;
-    const escrowContractAddr = dbTask.escrow_contract_address
-      ? dbTask.escrow_contract_address
-      : dbTask.escrow_tx_hash
-        ? escrowContractForTask({ escrowContractAddress: null, escrowTxHash: dbTask.escrow_tx_hash })
-        : ESCROW_CONTRACT_ADDRESS;
+    const escrowContractAddr = escrowContractForTask({
+      escrowContractAddress: dbTask.escrow_contract_address,
+      escrowTxHash: dbTask.escrow_tx_hash,
+      rewardMode: dbTask.reward_mode,
+    });
 
     return (
       <main className="comic-page min-h-screen overflow-hidden text-[#140625]">
@@ -374,7 +373,9 @@ export default async function TaskDetailPage({ params }: RouteParams) {
                       <EscrowFundPanel
                         taskId={dbTask.id}
                         rewardAmount={dbTask.reward_amount ?? 0}
-                        rewardMode={dbTask.reward_mode}
+                        rewardMode={
+                          dbTask.reward_mode === "raffle" ? "raffle" : "fixed"
+                        }
                         winnerCount={dbTask.raffle_winner_count}
                         locale={locale}
                       />

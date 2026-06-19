@@ -192,7 +192,9 @@ export const ESCROW_V2_REFUND_FCFS_ABI = [
 export function escrowContractForTask(input: {
   escrowContractAddress: string | null;
   escrowTxHash: string | null;
+  rewardMode?: string | null;
 }): string {
+  if (input.rewardMode === "fcfs") return ESCROW_V2_CONTRACT_ADDRESS;
   if (input.escrowContractAddress) return input.escrowContractAddress;
   return input.escrowTxHash ? ESCROW_V0_CONTRACT_ADDRESS : ESCROW_CONTRACT_ADDRESS;
 }
