@@ -7,10 +7,23 @@ import {
   ExternalLink,
   LoaderCircle,
   TriangleAlert,
+  Wallet,
 } from "lucide-react";
 import {
+  createPublicClient,
+  createWalletClient,
+  custom,
+  http,
+  type EIP1193Provider,
+} from "viem";
+import { base } from "viem/chains";
+import {
   ESCROW_CONTRACT_ADDRESS,
+  ESCROW_V2_CONTRACT_ADDRESS,
+  ESCROW_REFUND_ABI,
+  ESCROW_V2_REFUND_FCFS_ABI,
   basescanTxUrl,
+  uuidToBytes32,
 } from "@/lib/escrow";
 import { formatUsdc } from "@/lib/payments";
 import { refundEscrowAction } from "@/app/applications/actions";
@@ -22,9 +35,17 @@ import {
 
 type Phase =
   | "idle"
+  | "connecting"
   | "refunding"
+  | "recording"
   | "done"
   | "error";
+
+function getProvider(): EIP1193Provider | null {
+  if (typeof window === "undefined") return null;
+  const eth = (window as unknown as { ethereum?: EIP1193Provider }).ethereum;
+  return eth ?? null;
+}
 
 export function EscrowRefundPanel({
   taskId,
@@ -43,16 +64,61 @@ export function EscrowRefundPanel({
   const [error, setError] = useState<string>("");
   const [txHash, setTxHash] = useState<string>("");
 
-  const busy = phase === "refunding";
+  const busy = phase === "connecting" || phase === "refunding" || phase === "recording";
 
   async function handleRefund() {
     setError("");
 
+    const provider = getProvider();
+    if (!provider) {
+      setPhase("error");
+      setError(t("payment.walletNoWallet"));
+      return;
+    }
+
     try {
+      setPhase("connecting");
+      const [account] = (await provider.request({
+        method: "eth_requestAccounts",
+      })) as `0x${string}`[];
+      if (!account) throw new Error(t("payment.walletNoAccount"));
+
+      const walletClient = createWalletClient({
+        account,
+        chain: base,
+        transport: custom(provider),
+      });
+      const publicClient = createPublicClient({
+        chain: base,
+        transport: http(),
+      });
+
+      const currentChain = await walletClient.getChainId();
+      if (currentChain !== base.id) {
+        await walletClient.switchChain({ id: base.id });
+      }
+
+      const taskKey = uuidToBytes32(taskId);
+
       setPhase("refunding");
-      const result = await refundEscrowAction(taskId);
+      const isV2 = contractAddress.toLowerCase() === ESCROW_V2_CONTRACT_ADDRESS.toLowerCase();
+      const hash = await walletClient.writeContract({
+        address: contractAddress as `0x${string}`,
+        abi: isV2 ? ESCROW_V2_REFUND_FCFS_ABI : ESCROW_REFUND_ABI,
+        functionName: isV2 ? "refundFCFSEscrow" : "refundEscrow",
+        args: [taskKey],
+      });
+
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== "success") {
+        throw new Error(t("escrow.refund.reverted"));
+      }
+      setTxHash(hash);
+
+      setPhase("recording");
+      const result = await refundEscrowAction(taskId, hash);
       if (!result.ok) throw new Error(result.message);
-      if (result.txHash) setTxHash(result.txHash);
+
       setPhase("done");
       router.refresh();
     } catch (err) {
@@ -124,14 +190,21 @@ export function EscrowRefundPanel({
             disabled={busy}
             className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border-2 border-[#140625] bg-[#c42463] px-4 py-2 text-xs font-black uppercase text-white shadow-[3px_3px_0_#140625] transition hover:-translate-y-0.5 hover:bg-[#8a1742] disabled:cursor-not-allowed disabled:bg-[#c9c0d3] disabled:text-[#5a3b66]"
           >
-          {busy ? (
-            <>
-              <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
-              {t("escrow.refund.refunding")}
-            </>
-          ) : (
-            t("escrow.refund.button")
-          )}
+            {busy ? (
+              <>
+                <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
+                {phase === "connecting"
+                  ? t("escrow.refund.connecting")
+                  : phase === "refunding"
+                    ? t("escrow.refund.refunding")
+                    : t("escrow.refund.recording")}
+              </>
+            ) : (
+              <>
+                <Wallet aria-hidden="true" className="h-4 w-4" />
+                {t("escrow.refund.button")}
+              </>
+            )}
           </button>
           <p className="mt-2 text-xs font-bold text-[#5a3b66]">
             {t("escrow.refund.prompts")}

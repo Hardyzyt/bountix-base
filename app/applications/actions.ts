@@ -2,19 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createPublicClient, createWalletClient, http } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
-import { base } from "viem/chains";
 import { createClient } from "@/lib/supabase/server";
-import {
-  ESCROW_CONTRACT_ADDRESS,
-  ESCROW_V0_CONTRACT_ADDRESS,
-  ESCROW_V1_CONTRACT_ADDRESS,
-  ESCROW_V2_CONTRACT_ADDRESS,
-  ESCROW_REFUND_ABI,
-  ESCROW_V2_REFUND_FCFS_ABI,
-  uuidToBytes32,
-} from "@/lib/escrow";
+import { ESCROW_V1_CONTRACT_ADDRESS } from "@/lib/escrow";
 import { isUuid } from "@/lib/tasks";
 import type {
   ApplyState,
@@ -763,9 +752,15 @@ export async function releaseRaffleEscrowAction(
 // Escrow Refund (admin/owner only)
 // =====================================================================
 
-export async function refundEscrowAction(taskId: string) {
+export async function refundEscrowAction(
+  taskId: string,
+  refundTxHash: string,
+) {
   if (!isUuid(taskId)) {
     return { ok: false, message: "Invalid task id." };
+  }
+  if (!TX_HASH_RE.test(refundTxHash)) {
+    return { ok: false, message: "Invalid transaction hash." };
   }
 
   const { supabase, user, profile } = await loadActor();
@@ -773,7 +768,7 @@ export async function refundEscrowAction(taskId: string) {
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, creator_id, payment_method, reward_mode, escrow_tx_hash, escrow_contract_address, status")
+    .select("id, creator_id, payment_method, escrow_tx_hash, escrow_contract_address, status")
     .eq("id", taskId)
     .maybeSingle();
 
@@ -803,76 +798,20 @@ export async function refundEscrowAction(taskId: string) {
     return { ok: false, message: "This task is already completed." };
   }
 
-  // Determine contract address
-  let contractAddress: string;
-  if (task.escrow_contract_address) {
-    contractAddress = task.escrow_contract_address;
-  } else if (task.reward_mode === "fcfs") {
-    contractAddress = ESCROW_V2_CONTRACT_ADDRESS;
-  } else if (task.escrow_tx_hash) {
-    contractAddress = ESCROW_V0_CONTRACT_ADDRESS;
-  } else {
-    contractAddress = ESCROW_CONTRACT_ADDRESS;
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status: "cancelled" })
+    .eq("id", taskId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message || "Could not record refund.",
+    };
   }
 
-  // Choose ABI + function name based on contract version
-  const isV2 = contractAddress.toLowerCase() === ESCROW_V2_CONTRACT_ADDRESS.toLowerCase();
-  const refundAbi = isV2 ? ESCROW_V2_REFUND_FCFS_ABI : ESCROW_REFUND_ABI;
-  const functionName = isV2 ? "refundFCFSEscrow" : "refundEscrow";
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/dashboard/tasks");
 
-  // Build the task key (bytes32)
-  const taskKey = uuidToBytes32(taskId);
-
-  try {
-    const rawKey = process.env.PRIVATE_KEY;
-    if (!rawKey) {
-      return { ok: false, message: "PRIVATE_KEY belum diset. Tambahin PRIVATE_KEY ke environment variable Vercel, atau jalanin lokal make .env" };
-    }
-    const account = privateKeyToAccount(`0x${rawKey.replace(/^0x/, "")}` as `0x${string}`);
-    const walletClient = createWalletClient({
-      account,
-      chain: base,
-      transport: http(),
-    });
-    const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
-    });
-
-    const hash = await walletClient.writeContract({
-      address: contractAddress as `0x${string}`,
-      abi: refundAbi,
-      functionName,
-      args: [taskKey],
-    });
-
-    const receipt = await publicClient.waitForTransactionReceipt({ hash });
-
-    if (receipt.status !== "success") {
-      return { ok: false, message: "Refund transaction reverted on-chain." };
-    }
-
-    // Record the refund in DB
-    const { error } = await supabase
-      .from("tasks")
-      .update({ status: "cancelled" })
-      .eq("id", taskId);
-
-    if (error) {
-      return {
-        ok: false,
-        message: error.message || "Refund sent but could not record in DB.",
-        txHash: hash,
-      };
-    }
-
-    revalidatePath(`/tasks/${taskId}`);
-    revalidatePath("/dashboard/tasks");
-
-    return { ok: true, txHash: hash, message: "Escrow refunded. Task cancelled." };
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Refund transaction failed.";
-    return { ok: false, message };
-  }
+  return { ok: true, message: "Escrow refunded. Task cancelled." };
 }
