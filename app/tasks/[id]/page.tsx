@@ -26,6 +26,10 @@ import { EscrowRefundPanel } from "@/components/marketplace/escrow-refund-panel"
 import { SiteHeader } from "@/components/site-header";
 import { withdrawApplicationAction } from "@/app/applications/actions";
 import {
+  escrowContractForTask,
+  ESCROW_CONTRACT_ADDRESS,
+} from "@/lib/escrow";
+import {
   createTranslator,
   formatDate,
   type Locale,
@@ -165,6 +169,11 @@ export default async function TaskDetailPage({ params }: RouteParams) {
       dbTask.access_level === "early_contributor";
     const canWorkTask =
       !requiresEarlyContributor || ctx.hasEarlyContributorAccess;
+    const escrowContractAddr = dbTask.escrow_contract_address
+      ? dbTask.escrow_contract_address
+      : dbTask.escrow_tx_hash
+        ? escrowContractForTask({ escrowContractAddress: null, escrowTxHash: dbTask.escrow_tx_hash })
+        : ESCROW_CONTRACT_ADDRESS;
 
     return (
       <main className="comic-page min-h-screen overflow-hidden text-[#140625]">
@@ -357,6 +366,7 @@ export default async function TaskDetailPage({ params }: RouteParams) {
                         <EscrowRefundPanel
                           taskId={dbTask.id}
                           rewardAmount={dbTask.reward_amount ?? 0}
+                          contractAddress={escrowContractAddr}
                           locale={locale}
                         />
                       </>
@@ -375,6 +385,7 @@ export default async function TaskDetailPage({ params }: RouteParams) {
                 <EscrowRefundPanel
                   taskId={dbTask.id}
                   rewardAmount={dbTask.reward_amount ?? 0}
+                  contractAddress={escrowContractAddr}
                   locale={locale}
                 />
               ) : !ctx.userId ? (

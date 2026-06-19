@@ -768,7 +768,7 @@ export async function refundEscrowAction(
 
   const { data: task } = await supabase
     .from("tasks")
-    .select("id, creator_id, payment_method, escrow_tx_hash, status")
+    .select("id, creator_id, payment_method, escrow_tx_hash, escrow_contract_address, status")
     .eq("id", taskId)
     .maybeSingle();
 
