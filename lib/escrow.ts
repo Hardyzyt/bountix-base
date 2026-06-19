@@ -30,6 +30,10 @@ export const ESCROW_CONTRACT_VERSION = "v1";
 export const ESCROW_DEFAULT_FEE_BPS = 250;
 export const ESCROW_MAX_FEE_BPS = 1000;
 
+/** BountixEscrowV2 on Base mainnet. Supports FCFS escrow. */
+export const ESCROW_V2_CONTRACT_ADDRESS =
+  "0xdf680c699B705eB0e301fD83cA4A066F97a70f31";
+
 export const ESCROW_USDC_ADDRESS = BASE_MAINNET_USDC_ADDRESS;
 export const ESCROW_CHAIN_ID = BASE_MAINNET_CHAIN_ID;
 
@@ -159,11 +163,22 @@ export const ESCROW_RELEASE_RAFFLE_ABI = [
   },
 ] as const;
 
-/** ABI for admin/owner-only refund function. Returns full escrow to payer. */
+/** ABI for admin/owner-only refund function on V0/V1. Returns full escrow to payer. */
 export const ESCROW_REFUND_ABI = [
   {
     type: "function",
     name: "refundEscrow",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "taskId", type: "bytes32" }],
+    outputs: [],
+  },
+] as const;
+
+/** ABI for admin-only refund on V2 FCFS escrow. Returns remaining budget to payer. */
+export const ESCROW_V2_REFUND_FCFS_ABI = [
+  {
+    type: "function",
+    name: "refundFCFSEscrow",
     stateMutability: "nonpayable",
     inputs: [{ name: "taskId", type: "bytes32" }],
     outputs: [],

@@ -19,7 +19,9 @@ import {
 import { base } from "viem/chains";
 import {
   ESCROW_CONTRACT_ADDRESS,
+  ESCROW_V2_CONTRACT_ADDRESS,
   ESCROW_REFUND_ABI,
+  ESCROW_V2_REFUND_FCFS_ABI,
   basescanTxUrl,
   uuidToBytes32,
 } from "@/lib/escrow";
@@ -99,10 +101,11 @@ export function EscrowRefundPanel({
       const taskKey = uuidToBytes32(taskId);
 
       setPhase("refunding");
+      const isV2 = contractAddress.toLowerCase() === ESCROW_V2_CONTRACT_ADDRESS.toLowerCase();
       const hash = await walletClient.writeContract({
         address: contractAddress as `0x${string}`,
-        abi: ESCROW_REFUND_ABI,
-        functionName: "refundEscrow",
+        abi: isV2 ? ESCROW_V2_REFUND_FCFS_ABI : ESCROW_REFUND_ABI,
+        functionName: isV2 ? "refundFCFSEscrow" : "refundEscrow",
         args: [taskKey],
       });
 
