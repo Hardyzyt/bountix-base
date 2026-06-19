@@ -159,6 +159,17 @@ export const ESCROW_RELEASE_RAFFLE_ABI = [
   },
 ] as const;
 
+/** ABI for admin/owner-only refund function. Returns full escrow to payer. */
+export const ESCROW_REFUND_ABI = [
+  {
+    type: "function",
+    name: "refundEscrow",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "taskId", type: "bytes32" }],
+    outputs: [],
+  },
+] as const;
+
 /**
  * Use a task's recorded contract for release. Legacy funded tasks without a
  * recorded address predate V1 and should fall back to V0.

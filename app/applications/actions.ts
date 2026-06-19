@@ -747,3 +747,71 @@ export async function releaseRaffleEscrowAction(
 
   return { ok: true, message: "Raffle escrow released." };
 }
+
+// =====================================================================
+// Escrow Refund (admin/owner only)
+// =====================================================================
+
+export async function refundEscrowAction(
+  taskId: string,
+  refundTxHash: string,
+) {
+  if (!isUuid(taskId)) {
+    return { ok: false, message: "Invalid task id." };
+  }
+  if (!TX_HASH_RE.test(refundTxHash)) {
+    return { ok: false, message: "Invalid transaction hash." };
+  }
+
+  const { supabase, user, profile } = await loadActor();
+  if (!user) redirect("/login");
+
+  const { data: task } = await supabase
+    .from("tasks")
+    .select("id, creator_id, payment_method, escrow_tx_hash, status")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  if (!task) {
+    return { ok: false, message: "Task not found." };
+  }
+
+  const isAdmin = profile?.role === "admin";
+  const isOwner = task.creator_id === user.id;
+  if (!isAdmin && !isOwner) {
+    return { ok: false, message: "Permission denied." };
+  }
+
+  if (task.payment_method !== "escrow_base") {
+    return { ok: false, message: "This task does not use escrow." };
+  }
+
+  if (!task.escrow_tx_hash) {
+    return { ok: false, message: "This task has not been funded yet." };
+  }
+
+  if (task.status === "cancelled") {
+    return { ok: false, message: "This task is already cancelled." };
+  }
+
+  if (task.status === "completed") {
+    return { ok: false, message: "This task is already completed." };
+  }
+
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status: "cancelled" })
+    .eq("id", taskId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message || "Could not record refund.",
+    };
+  }
+
+  revalidatePath(`/tasks/${taskId}`);
+  revalidatePath("/dashboard/tasks");
+
+  return { ok: true, message: "Escrow refunded. Task cancelled." };
+}

@@ -22,6 +22,7 @@ import { SubmissionForm } from "@/components/marketplace/submission-form";
 import { ApplyForm } from "@/components/marketplace/apply-form";
 import { SubmitWorkForm } from "@/components/marketplace/submit-work-form";
 import { EscrowFundPanel } from "@/components/marketplace/escrow-fund-panel";
+import { EscrowRefundPanel } from "@/components/marketplace/escrow-refund-panel";
 import { SiteHeader } from "@/components/site-header";
 import { withdrawApplicationAction } from "@/app/applications/actions";
 import {
@@ -335,23 +336,30 @@ export default async function TaskDetailPage({ params }: RouteParams) {
 
                   {dbTask.payment_method === "escrow_base" ? (
                     dbTask.escrow_tx_hash ? (
-                      <div className="comic-card-soft bg-[#dff7e6] p-5">
-                        <h2 className="text-lg font-black text-[#140625]">
-                          {t("taskDetail.escrowFunded")}
-                        </h2>
-                        <p className="mt-2 text-sm font-semibold leading-6 text-[#5a3b66]">
-                          {t("taskDetail.usdcLocked")}
-                        </p>
-                        <a
-                          href={`https://basescan.org/tx/${dbTask.escrow_tx_hash}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-4 inline-flex items-center gap-2 break-all rounded-lg border-2 border-[#140625] bg-white px-3 py-2 text-sm font-black text-[#7c3cff] shadow-[3px_3px_0_#140625] transition hover:bg-[#38e7ff]"
-                        >
-                          <ExternalLink aria-hidden="true" className="h-4 w-4" />
-                          {t("taskDetail.viewFundingTx")}
-                        </a>
-                      </div>
+                      <>
+                        <div className="comic-card-soft bg-[#dff7e6] p-5">
+                          <h2 className="text-lg font-black text-[#140625]">
+                            {t("taskDetail.escrowFunded")}
+                          </h2>
+                          <p className="mt-2 text-sm font-semibold leading-6 text-[#5a3b66]">
+                            {t("taskDetail.usdcLocked")}
+                          </p>
+                          <a
+                            href={`https://basescan.org/tx/${dbTask.escrow_tx_hash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-4 inline-flex items-center gap-2 break-all rounded-lg border-2 border-[#140625] bg-white px-3 py-2 text-sm font-black text-[#7c3cff] shadow-[3px_3px_0_#140625] transition hover:bg-[#38e7ff]"
+                          >
+                            <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                            {t("taskDetail.viewFundingTx")}
+                          </a>
+                        </div>
+                        <EscrowRefundPanel
+                          taskId={dbTask.id}
+                          rewardAmount={dbTask.reward_amount ?? 0}
+                          locale={locale}
+                        />
+                      </>
                     ) : (
                       <EscrowFundPanel
                         taskId={dbTask.id}
@@ -363,6 +371,12 @@ export default async function TaskDetailPage({ params }: RouteParams) {
                     )
                   ) : null}
                 </>
+              ) : ctx.isAdmin && !isOwner && dbTask.payment_method === "escrow_base" && dbTask.escrow_tx_hash ? (
+                <EscrowRefundPanel
+                  taskId={dbTask.id}
+                  rewardAmount={dbTask.reward_amount ?? 0}
+                  locale={locale}
+                />
               ) : !ctx.userId ? (
                 <div className="comic-card-soft bg-white p-5">
                   <h2 className="text-lg font-black text-[#140625]">
