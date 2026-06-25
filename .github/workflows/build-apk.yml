@@ -1,0 +1,53 @@
+name: Build APK from Website
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Website URL'
+        required: true
+        default: 'https://bountix.xyz'
+      name:
+        description: 'App name'
+        required: true
+        default: 'Bountix'
+      package_id:
+        description: 'Package ID (com.example.app)'
+        required: true
+        default: 'com.bountix.app'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Generate APK
+        run: |
+          bubblewrap init \
+            --host "${{ github.event.inputs.url }}" \
+            --app-name "${{ github.event.inputs.name }}" \
+            --package-id "${{ github.event.inputs.package_id }}" \
+            --directory ./bountix-app
+
+          bubblewrap build --directory ./bountix-app
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: ./bountix-app/**/*.apk
