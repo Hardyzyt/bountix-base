@@ -37,14 +37,18 @@ jobs:
         run: npm install -g @bubblewrap/cli
 
       - name: Generate APK
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          bubblewrap init \
+          echo "n" | bubblewrap init \
             --host "${{ github.event.inputs.url }}" \
             --app-name "${{ github.event.inputs.name }}" \
             --package-id "${{ github.event.inputs.package_id }}" \
             --directory ./bountix-app
 
-          bubblewrap build --directory ./bountix-app
+          cd ./bountix-app
+          echo "n" | bubblewrap build
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
