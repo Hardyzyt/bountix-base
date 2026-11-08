@@ -1,0 +1,46 @@
+{
+  "phase": "after",
+  "source": "actual Next pages, server action, Supabase SDK, Chromium; synthetic in-memory API only",
+  "savedCount": 1,
+  "savedSocialLinks": {
+    "x": "https://x.com/bountix_test",
+    "telegram": "https://t.me/bountix_test",
+    "github": "https://github.com/bountix-test",
+    "website": "https://example.com/creator"
+  },
+  "clickedDestination": "https://t.me/bountix_test",
+  "records": [
+    {
+      "name": "existing-desktop",
+      "actual": {
+        "x": "https://x.com/bountix_test",
+        "telegram": "https://t.me/bountix_test",
+        "github": "https://github.com/bountix-test"
+      }
+    },
+    {
+      "name": "saved-desktop",
+      "actual": {
+        "x": "https://x.com/bountix_test",
+        "telegram": "https://t.me/bountix_test",
+        "github": "https://github.com/bountix-test"
+      }
+    },
+    {
+      "name": "existing-applicant",
+      "actual": {
+        "x": "https://x.com/bountix_test",
+        "telegram": "https://t.me/bountix_test",
+        "github": "https://github.com/bountix-test"
+      }
+    },
+    {
+      "name": "existing-mobile",
+      "actual": {
+        "x": "https://x.com/bountix_test",
+        "telegram": "https://t.me/bountix_test",
+        "github": "https://github.com/bountix-test"
+      }
+    }
+  ]
+}
